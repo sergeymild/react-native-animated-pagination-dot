@@ -4,20 +4,23 @@
  * Converted to Typescript on 14/07/2020.
  * Converted to Functional component. on 21/09/2021
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated } from 'react-native';
-import { usePrevious } from 'react-use';
 import EmptyDot from './EmptyDot';
-import { getDotStyle } from '../util/DotUtils';
+import { getDotStyle, usePrevious } from '../util/DotUtils';
 
 const Dot: React.FC<{
   idx: number;
   curPage: number;
   maxPage: number;
   activeColor: string;
+  inActiveDotColor: string;
   sizeRatio: number;
 }> = (props) => {
-  const [animVal] = useState(new Animated.Value(0));
+  const animVal = useRef<Animated.Value | null>(null);
+  if (animVal.current === null) {
+    animVal.current = new Animated.Value(0);
+  }
   const [animate, setAnimate] = useState(false);
   const [type, setType] = useState(() =>
     getDotStyle({
@@ -52,8 +55,8 @@ const Dot: React.FC<{
   useEffect(() => {
     if (!animate) return;
 
-    animVal.setValue(0);
-    Animated.timing(animVal, {
+    animVal.current?.setValue(0);
+    Animated.timing(animVal.current!, {
       toValue: 1,
       duration: 300,
       useNativeDriver: false,
@@ -61,7 +64,7 @@ const Dot: React.FC<{
   }, [animVal, animate, prevType, type]);
 
   const animStyle = useMemo(() => {
-    const size = animVal.interpolate({
+    const size = animVal.current!.interpolate({
       inputRange: [0, 1],
       outputRange: [
         (prevType?.size || 3) * props.sizeRatio,
@@ -71,14 +74,7 @@ const Dot: React.FC<{
     return {
       width: size,
       height: size,
-      borderRadius: animVal.interpolate({
-        inputRange: [0, 1],
-        outputRange: [
-          (prevType?.size || 3) * props.sizeRatio * 0.5,
-          type.size * props.sizeRatio * 0.5,
-        ],
-      }),
-      opacity: animVal.interpolate({
+      opacity: animVal.current!.interpolate({
         inputRange: [0, 1],
         outputRange: [prevType?.opacity || 0.2, type.opacity],
       }),
@@ -102,7 +98,11 @@ const Dot: React.FC<{
     <Animated.View
       style={[
         {
-          backgroundColor: props.activeColor,
+          borderRadius: 1000,
+          backgroundColor:
+            props.curPage === props.idx
+              ? props.activeColor
+              : props.inActiveDotColor,
           margin: 3 * props.sizeRatio,
         },
         animStyle,
@@ -111,4 +111,4 @@ const Dot: React.FC<{
   );
 };
 
-export default Dot;
+export default memo(Dot);

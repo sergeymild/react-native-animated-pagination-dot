@@ -4,17 +4,24 @@
  * Converted to Typescript on 14/07/2020.
  * Converted to Functional component. on 21/09/2021
  */
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ScrollView, View, ViewStyle, StyleProp } from 'react-native';
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  ScrollView,
+  View,
+  ViewStyle,
+  StyleProp,
+  StyleSheet,
+} from 'react-native';
 import Dot from './component/Dot';
 import EmptyDot, { defaultEmptyDotSize } from './component/EmptyDot';
-import { usePrevious } from 'react-use';
+import { usePrevious } from './util/DotUtils';
 
 export interface IDotContainerProps {
   curPage: number;
   maxPage: number;
   sizeRatio?: number;
   activeDotColor: string;
+  inActiveDotColor: string;
   vertical?: boolean;
 }
 
@@ -24,13 +31,13 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
   const refScrollView = useRef<ScrollView>(null);
   const prevPage = usePrevious(props.curPage);
 
-  const getSizeRatio = useCallback<() => number>(() => {
+  const getSizeRatio = useCallback(() => {
     if (!props.sizeRatio) return 1.0;
 
     return Math.max(1.0, props.sizeRatio);
   }, [props.sizeRatio]);
 
-  const scrollTo = useCallback<(index: number, animated?: boolean) => void>(
+  const scrollTo = useCallback(
     (index, animated = true) => {
       if (!refScrollView.current) return;
 
@@ -40,7 +47,7 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
 
       const moveTo = Math.max(
         0,
-        FIRST_EMPTY_DOT_SPACE + (index - 4) * MOVE_DISTANCE
+        FIRST_EMPTY_DOT_SPACE + (index - 3) * MOVE_DISTANCE
       );
 
       if (props.vertical) {
@@ -61,7 +68,7 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
     [getSizeRatio, props.vertical]
   );
 
-  const getContainerStyle = useCallback<() => StyleProp<ViewStyle>>(() => {
+  const getContainerStyle = useMemo<StyleProp<ViewStyle>>(() => {
     const { vertical } = props;
     const sizeRatio = getSizeRatio();
     const containerSize = 84 * sizeRatio;
@@ -83,20 +90,16 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
   const list = useMemo(() => [...Array(maxPage).keys()], [maxPage]);
 
   let normalizedPage = curPage;
-  if (curPage < 0) {
-    normalizedPage = 0;
-  }
+  if (curPage < 0) normalizedPage = 0;
 
   if (curPage > maxPage - 1) {
     normalizedPage = maxPage - 1;
   }
   const sizeRatio = getSizeRatio();
 
-  const container = getContainerStyle();
-
   if (maxPage < 5) {
     return (
-      <View style={container}>
+      <View style={getContainerStyle}>
         {list.map((i) => {
           return (
             <Dot
@@ -105,6 +108,7 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
               sizeRatio={sizeRatio}
               curPage={normalizedPage}
               maxPage={maxPage}
+              inActiveDotColor={props.inActiveDotColor}
               activeColor={activeDotColor}
             />
           );
@@ -115,7 +119,7 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
 
   return (
     <View
-      style={container}
+      style={getContainerStyle}
       onLayout={() => {
         // scroll to right index on initial render
         scrollTo(props.curPage, false);
@@ -123,9 +127,7 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
     >
       <ScrollView
         ref={refScrollView}
-        contentContainerStyle={{
-          alignItems: 'center',
-        }}
+        contentContainerStyle={styles.contentContainer}
         bounces={false}
         horizontal={!props.vertical}
         scrollEnabled={false}
@@ -144,6 +146,7 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
               idx={i}
               curPage={normalizedPage}
               maxPage={maxPage}
+              inActiveDotColor={props.inActiveDotColor}
               activeColor={activeDotColor}
             />
           );
@@ -157,4 +160,10 @@ const DotContainer: React.FC<IDotContainerProps> = (props) => {
   );
 };
 
-export default DotContainer;
+export default memo(DotContainer);
+
+const styles = StyleSheet.create({
+  contentContainer: {
+    alignItems: 'center',
+  },
+});

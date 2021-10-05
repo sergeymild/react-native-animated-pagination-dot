@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 type IDotStyle = {
   size: number;
   opacity: number;
@@ -43,7 +45,6 @@ export const getDotStyle = ({
   let type = EnumDotType.SMALL;
 
   if (maxPage < 5) {
-    //5개 이하인 경우는 단수이기 때문에 큰 Dot으로만 구성
     // return ( idx === curPage ) ? EnumDotType.ACTIVE : EnumDotType.INACTIVE;
     return DotStyle[
       idx === curPage ? EnumDotType.ACTIVE : EnumDotType.INACTIVE
@@ -51,9 +52,7 @@ export const getDotStyle = ({
   }
 
   if (curPage < 3) {
-    // 현재 페이지가 3 이하일때는 별도로 배열을 지정해줌
-    // 배열
-    // 큰 큰 큰 중
+    //If the current page is 3 or less, a separate array is specified.
     if (idx < 3) {
       type = EnumDotType.INACTIVE;
       if (curPage === idx) {
@@ -65,9 +64,6 @@ export const getDotStyle = ({
       type = EnumDotType.SMALL;
     }
   } else if (curPage === 3) {
-    //4번째 페이지 일때 배열은 별도로 지정해줌
-    // 배열
-    // 중 큰 큰 큰 중
     if (idx < 4) {
       if (idx === 0) {
         type = EnumDotType.MEDIUM;
@@ -84,7 +80,7 @@ export const getDotStyle = ({
       type = EnumDotType.SMALL;
     }
   } else {
-    //기타는 모두 동일한 로직으로 돌아가도록
+    // so that return to the same logic
     if (idx > curPage) {
       if (idx === curPage + 1) {
         type = EnumDotType.MEDIUM;
@@ -102,3 +98,11 @@ export const getDotStyle = ({
 
   return DotStyle[type];
 };
+
+export function usePrevious<T>(state: T) {
+  const ref = useRef<T>();
+  useEffect(function () {
+    ref.current = state;
+  });
+  return ref.current;
+}

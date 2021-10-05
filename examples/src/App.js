@@ -77,6 +77,7 @@ const TestDotContainer = ({ color, sizeRatio = 1.0, maxPage = 10 }) => {
           curPage={page}
           maxPage={maxPage}
           sizeRatio={sizeRatio}
+          inActiveDotColor={'red'}
         />
 
         <Button
